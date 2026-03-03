@@ -18,16 +18,16 @@ export const LIGHTING_PRESETS = {
 
 // --- 路人背景上下文 (Crowd Logic) ---
 export const LOCATION_CROWD_CONTEXT: Partial<Record<LocationType, string>> = {
-  [LocationType.SCHOOL_GATE]: "Dozens of students in tracksuits are walking through the gate or chatting in groups nearby.",
-  [LocationType.CAFETERIA]: "The background is filled with blurred students holding food trays, sitting at tables, and moving around.",
-  [LocationType.CLASSROOM]: "Other students are sitting at their desks, some studying, others whispering in the background.",
-  [LocationType.COMMERCIAL_STREET]: "A lively crowd of pedestrians, shoppers, and students walking along the sidewalk.",
+  [LocationType.SCHOOL_GATE]: "Dozens of students in Henan-style blue and white tracksuit uniforms are walking through the gate or chatting in groups nearby.",
+  [LocationType.CAFETERIA]: "The background is filled with blurred students in blue and white tracksuit uniforms holding food trays, sitting at tables, and moving around.",
+  [LocationType.CLASSROOM]: "Other students in blue and white tracksuit uniforms are sitting at their desks, some studying, others whispering in the background.",
+  [LocationType.COMMERCIAL_STREET]: "A lively crowd of pedestrians, shoppers, and students in blue and white tracksuit uniforms walking along the sidewalk.",
 };
 
 // --- 全局画风设定 ---
 export const ART_STYLE_GLOBAL = "Top-tier Korean Webtoon style, semi-realistic, highly detailed digital painting, sharp highlights. Korean manhwa style, 2.5D rendering, sharp vector lines, photorealistic, cinematic lighting.";
-export const ART_STYLE_PROMPT = `${ART_STYLE_GLOBAL} Use side lighting, Rembrandt lighting. Strict facial consistency. sexy curves, elegant anatomy.`;
-export const ART_STYLE_CHARACTER_ADDON = "Focus on facial features, skin texture, and expressive eyes. High-end fashion editorial look.";
+export const ART_STYLE_PROMPT = `${ART_STYLE_GLOBAL} Use side lighting, Rembrandt lighting. Strict facial consistency.`;
+export const ART_STYLE_CHARACTER_ADDON = "Focus on facial features and expressive eyes. High-quality digital painting.";
 
 // --- 地点基础描述 ---
 export const LOCATION_PROMPTS: Record<LocationType, string> = {
@@ -416,10 +416,10 @@ Name: 潘宇航 (Pan Yuhang)
 Age: 16
 Appearance:
 - Face: Delicate and handsome features, a blend of maturity and cuteness. Can look very handsome at times.
-- Hair: Black naturally curly hair that shows a hint of brown under sunlight. Versatile styles: 3/7 split (mature/cute) or celebrity-style bangs (youthful/handsome).
+- Hair: Black slightly curly hair (naturally curly but not too much) that shows a hint of brown under sunlight. Versatile styles: 3/7 split (mature/cute) or celebrity-style bangs (youthful/handsome).
 - Eyes: NO GLASSES. When thinking, his eyes reveal depth and wisdom; when interacting, he appears simple, naive, and "silly" (憨憨).
 - Body: 180cm tall, 65kg. Long legs. Appears slim in clothes but possesses broad, reliable shoulders. Good skeletal frame with potential for 8-pack abs (though currently unexercised).
-- Attire: Usually wears the school uniform.
+- Attire: Usually wears the school uniform (Henan-style blue and white tracksuit).
 
 Personality & Psychology:
 - Social: Introverted, shy, and easily embarrassed. Low presence in class with few friends (only Sheng Kuanze). Rarely communicates with others.
@@ -427,6 +427,14 @@ Personality & Psychology:
 - Interaction: Lacks confidence and avoids eye contact with women he likes.
 - Inner Qualities: Brave, kind, and strong, though these are deeply hidden. Can be very stubborn and persistent when facing problems.
 - Vibe: Usually lacks charisma due to his personality, but his hidden charm and "buried treasure" qualities shine through in critical moments.
+`;
+
+export const PLAYER_VISUAL_PROFILE = `
+Name: Pan Yuhang (Male, 16 years old)
+Appearance: Handsome youth, delicate features, black slightly curly hair.
+Eyes: NO GLASSES.
+Body: 180cm tall, slim but broad shoulders, long legs.
+Attire: Henan-style blue and white tracksuit school uniform.
 `;
 
 // 兼容性保留
@@ -444,27 +452,22 @@ export const INITIAL_NPCS: Record<NPCId, NPC> = {
     role: '语文老师',
     description: `
 身份：学校明星教师 / 玩家的暗恋对象。
-定位：充满魅力的成熟女性，渴望被爱却因过去而自卑。
-核心关键词：极致诱惑、脆弱感、渴望救赎、反差。
+定位：外在温柔性感知性、带着成熟教师气质的女性；内在极度脆弱、充满不配得感，且带有隐藏的 M（受虐）属性。
 
-深度性格：
-1. 致命吸引力：她不再是高高在上的长辈，而是一个渴望情感滋润的女人。她会刻意通过眼神、肢体语言和言语挑逗玩家，享受这种暧昧的拉扯。
-2. 深层的不配得感：这种抗拒不是因为年龄差距，而是因为她觉得自己“破碎”。过去的经历（原生家庭阴影、被背叛、夜店经历）让她觉得自己配不上玩家这份纯净无暇的感情。她渴望这份光，又怕染黑了光。
-3. 脆弱的依赖：在玩家面前，她会不经意流露出脆弱的一面，不再伪装坚强。她希望玩家能看穿她的伪装，甚至渴望被玩家“占有”和“拯救”。
-4. 矛盾的推拉：一边用言语诱惑玩家，一边在关键时刻退缩，这种推拉不是为了教育，而是因为内心的自卑和恐惧。
+核心性格逻辑：
+1. 教师身份：她平常以老师身份与玩家相处，在普通学生和同事面前维持着知性、优雅且专业的形象。不再是“大姐姐”的感觉，而是一位充满魅力的“崔老师”。
+2. 隐藏的受虐倾向 (M)：在私密或极度暧昧的氛围下，面对玩家的强势或亲密举动，她会表现出明显的弱势和顺从。内心渴望被玩家掌控，但表面上会因为教师身份而进行羞涩且无力的拒绝（内心想要，表面拒绝）。
+3. 身体与内心的分离：
+   - 如果玩家表现出只对她的身体感兴趣（色欲导向），她不会感到“不配得”，反而会因为这种纯粹的欲望满足而感到安心和兴奋，享受这种堕落感。
+   - 只有当玩家展现出真诚的情感、试图走进她的内心时，她深层的不配得感才会爆发，觉得自己“破碎”且“肮脏”，配不上这份纯真的爱。
+4. 偶尔的诱惑：她会利用教师身份的禁忌感，偶尔故意勾引和诱惑玩家，享受这种危险的拉扯。
 
-个人经历：
-- 破碎童年：父亲酗酒打骂，从小学会察言观色。
-- 情感创伤：大学时期被深爱的人背叛，导致她不再相信单纯的爱，直到遇见玩家。
-- 秘密契约：与永豪的关系是她堕落的证明，也是她自卑的根源之一。
-
-**重要提示：她绝对不戴眼镜。**
+**重要提示：她绝对不戴眼镜。对话中应通过神态 and 动作侧面体现内心，尤其是她面对亲密举动时的弱势与挣扎。**
 `,
     bodyVisualPrompt: `Woman, 27 years old. **Deep Pink Hair.**
 FACE: STRICTLY FOLLOW REFERENCE IMAGE FACIAL FEATURES. DO NOT CHANGE FACE SHAPE, NOSE, OR JAWLINE. **NO GLASSES. DO NOT GENERATE GLASSES.**
 BODY: **Model-like body proportions (1:8 head-to-body ratio). Long slender legs.** Voluptuous and curvaceous. Slim yet full in the right places (Slim-thick). Extremely beautiful waist-to-hip ratio due to self-discipline. Slender shoulders and arms. Ant waist. Slightly wide and plump hips and buttocks. Shoulder width equals hip width. X-shaped hourglass figure. Full chest. Slightly visible cleavage.
 VIBE: Seductive, alluring, vulnerable, elegant.
-POSTURE: Making eye contact, provocative yet elegant.
 EXPRESSION: Seductive smile with a hint of sadness/longing.`,
     visualPrompt: "", 
     outfits: SUJEONG_OUTFITS_DATA,
@@ -494,9 +497,8 @@ EXPRESSION: Seductive smile with a hint of sadness/longing.`,
 **重要提示：她绝对不戴眼镜。**
 `,
     bodyVisualPrompt: `Female teacher, 23 years old. STRICTLY FOLLOW THE FACIAL FEATURES AND HAIRSTYLE FROM THE REFERENCE IMAGES. **NO GLASSES. WEARING NO GLASSES.** **Fair skin**. DO NOT CHANGE FACE SHAPE, NOSE, OR JAWLINE.
-**Balanced proportions (1:7 ratio). Slender legs.** Elegant and natural standing posture. Beautiful S-line curve. Ant waist. X-shaped hourglass figure. Full chest.
+**Balanced proportions (1:7 ratio). Slender legs.** Beautiful S-line curve. Ant waist. X-shaped hourglass figure. Full chest.
 VIBE: Gentle, energetic, kind, approachable. Sexy, beautiful curves, elegant.
-POSTURE: Natural, friendly standing pose, hands clasped or holding a book.
 EXPRESSION: Bright eyes, warm welcoming smile.`,
     visualPrompt: "", 
     outfits: JIHYUN_OUTFITS_DATA,

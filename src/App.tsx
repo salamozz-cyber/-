@@ -131,6 +131,9 @@ const App: React.FC = () => {
     // 判断是否为工作日 (1-5)
     const isWorkday = dateInfo.dayOfWeek >= 1 && dateInfo.dayOfWeek <= 5;
     
+    // 立即更新标记，防止重复进入
+    setLastOutfitChangeDay(gameState.day);
+
     setGameState(prev => {
         const newNpcs = { ...prev.npcs };
         let changed = false;
@@ -162,17 +165,29 @@ const App: React.FC = () => {
 
         if (!changed) return prev;
 
-        // 只有在不是第一天初始化时才显示通知（防止开局弹窗过多）
-        if (prev.day > 1 || prev.time > 350) {
-            setTimeout(() => showNotification(`👗 崔秀晶换上了: ${changedOutfitName}`), 1000);
-        }
-
         return {
             ...prev,
             npcs: newNpcs
         };
     });
-    setLastOutfitChangeDay(gameState.day);
+
+    // 将通知逻辑移出 setGameState
+    const sujeong = gameState.npcs[NPCId.SUJEONG];
+    if (sujeong) {
+        const targetType = isWorkday ? 'work' : 'casual';
+        const available = SUJEONG_OUTFITS_DATA.filter(o => o.type === targetType);
+        if (available.length > 0) {
+            const otherOutfits = available.filter(o => o.id !== sujeong.currentOutfitId);
+            const randomOutfit = otherOutfits.length > 0 
+                ? otherOutfits[Math.floor(Math.random() * otherOutfits.length)]
+                : available[0];
+            if (sujeong.currentOutfitId !== randomOutfit.id) {
+                if (gameState.day > 1 || gameState.time > 350) {
+                    setTimeout(() => showNotification(`👗 崔秀晶换上了: ${randomOutfit.name}`), 1000);
+                }
+            }
+        }
+    }
   }, [gameState.day, gameState.time, lastOutfitChangeDay]);
 
   const advanceTime = (minutes: number) => {
@@ -359,7 +374,7 @@ const App: React.FC = () => {
         if (mainNpc && !avatarUrl) {
             try {
                 showNotification(`正在准备 ${mainNpc.name} 的形象...`);
-                avatarUrl = await generateNPCImage(mainNpc, 'neutral', undefined, npcRefs);
+                avatarUrl = await generateNPCImage(mainNpc, 'neutral', loc, npcRefs);
                 if (avatarUrl && avatarUrl.startsWith('data:image')) {
                     avatarBase64 = avatarUrl.split('base64,')[1];
                 }
@@ -368,10 +383,11 @@ const App: React.FC = () => {
             }
         }
 
-        let bg = "https://picsum.photos/1920/1080";
+        let bg = gameState.backgroundUrl;
         try {
             showNotification(`正在渲染 ${loc} 场景...`);
-            bg = await generateSceneImage(loc, mainNpc, avatarBase64, state.time, "", false, userSceneBg, 'neutral', state.day);
+            const generatedBg = await generateSceneImage(loc, mainNpc, avatarBase64, state.time, "", false, userSceneBg, 'neutral', state.day);
+            if (generatedBg) bg = generatedBg;
         } catch (err: any) {
             console.warn("Scene generation failed", err);
         }
@@ -433,7 +449,7 @@ const App: React.FC = () => {
         // 2. 强制生成当前表情的 NPC 头像 (Instant Generation)
         // 不使用缓存，总是重新生成
         const npcRefs = await getNPCRefs(npcId);
-        const avatarUrl = await generateNPCImage(npc, emotion, undefined, npcRefs);
+        const avatarUrl = await generateNPCImage(npc, emotion, gameState.location, npcRefs);
         
         let avatarBase64: string | null = null;
         if (avatarUrl && avatarUrl.startsWith('data:image')) {
@@ -500,7 +516,13 @@ const App: React.FC = () => {
     }
 
     const trimmedText = text.trim();
-    const savedAction = actionInput.trim();
+    const actionFromInput = actionInput.trim();
+    
+    // 尝试从对话文本中提取动作模式 (动作: ...)
+    const actionFromTextMatch = trimmedText.match(/[（(]动作[:：]\s*(.*?)[)）]/);
+    const actionFromText = actionFromTextMatch ? actionFromTextMatch[1] : null;
+    
+    const savedAction = actionFromInput || actionFromText || "";
     
     // 如果既没有动作也没有文字，不处理
     if (!trimmedText && !savedAction) return;
@@ -510,11 +532,12 @@ const App: React.FC = () => {
     // 构造完整输入内容：包含动作（如果有）和对话文本
     const hasAction = !!savedAction;
     let fullInput = trimmedText;
-    if (hasAction) {
-        fullInput = trimmedText ? `(动作: ${savedAction}) ${trimmedText}` : `(动作: ${savedAction})`;
+    if (actionFromInput) {
+        fullInput = trimmedText ? `(动作: ${actionFromInput}) ${trimmedText}` : `(动作: ${actionFromInput})`;
         setActionInput(''); // 发送后清空动作输入
     }
-
+    // 如果是从文本中提取的，fullInput 已经包含了该文本，不需要额外构造
+    
     // 1. 立即显示玩家输入
     setGameState(prev => {
         // 如果是手机聊天，更新手机消息记录
@@ -635,7 +658,7 @@ const App: React.FC = () => {
                 // 关键：将当前的常态立绘作为参考图传入，确保一致性
                 const npcRefs = await getNPCRefs(npcId);
                 const neutralRef = currentNpc.avatars?.neutral ? [currentNpc.avatars.neutral] : npcRefs;
-                avatarUrl = await generateNPCImage(currentNpc, emotion, undefined, neutralRef);
+                avatarUrl = await generateNPCImage(currentNpc, emotion, gameState.location, neutralRef, bracketContent || "");
             }
         } catch (e: any) {
             console.warn("Failed to generate NPC avatar:", e?.message || "Unknown error");
@@ -643,6 +666,7 @@ const App: React.FC = () => {
         
         // 6. 只有当玩家执行了动作时，才重新生成场景
         let newBackgroundUrl = gameState.backgroundUrl;
+        console.log("[Game] hasAction:", hasAction, "avatarUrl exists:", !!avatarUrl);
         if (hasAction && avatarUrl && gameState.npcs[npcId]) {
             try {
                 showNotification("正在生成动作场景...");
@@ -651,6 +675,7 @@ const App: React.FC = () => {
                 if (avatarUrl && avatarUrl.startsWith('data:image')) {
                     avatarBase64 = avatarUrl.split('base64,')[1];
                 } else {
+                    console.log("[Game] avatarUrl is not data:image, falling back to neutral/refs");
                     // 如果生成失败，回退到常态立绘或参考图
                     const neutralUrl = (gameState.npcs[npcId].avatars && gameState.npcs[npcId].avatars.neutral) || gameState.npcs[npcId].avatarUrl;
                     if (neutralUrl && neutralUrl.startsWith('data:image')) {
@@ -664,9 +689,10 @@ const App: React.FC = () => {
                 }
 
                 const sceneRefs = await getSceneRefs(gameState.location);
-                const userSceneBg = sceneRefs[0] ? sceneRefs[0].split('base64,')[1] : null;
+                const userSceneBg = sceneRefs[0] && sceneRefs[0].includes('base64,') ? sceneRefs[0].split('base64,')[1] : null;
                 
                 // --- 关键改进：使用 AI 分析复杂的互动场景 ---
+                console.log("[Game] Calling analyzeSceneAction with:", savedAction);
                 showNotification("正在分析场景细节...");
                 const interactionPrompt = await analyzeSceneAction(
                     gameState.location,
@@ -675,7 +701,9 @@ const App: React.FC = () => {
                     replyText
                 );
                 
+                console.log("[Game] Interaction Prompt:", interactionPrompt);
                 const bg = await generateSceneImage(gameState.location, gameState.npcs[npcId], avatarBase64, gameState.time, interactionPrompt, true, userSceneBg, emotion, gameState.day);
+                console.log("[Game] Generated Background URL:", bg?.substring(0, 50) + "...");
                 if (bg) newBackgroundUrl = bg;
             } catch (e: any) {
                 console.warn("Failed to regenerate scene on action:", e?.message || "Unknown error");
@@ -848,6 +876,7 @@ const App: React.FC = () => {
                                 src={displayUrl} 
                                 className="w-full h-full object-cover rounded-tr-3xl border-r-2 border-t-2 border-white/20 shadow-2xl" 
                                 alt="avatar"
+                                referrerPolicy="no-referrer"
                                 onError={(e) => {
                                     // 如果当前头像加载失败，尝试回退到默认头像
                                     const target = e.target as HTMLImageElement;
@@ -861,10 +890,7 @@ const App: React.FC = () => {
                           );
                       })()}
                       
-                      {/* 表情状态指示器 */}
-                      <div className="absolute top-4 left-4 bg-black/60 text-xs px-2 py-1 rounded text-white/80 backdrop-blur-sm border border-white/10">
-                          {gameState.currentDialogue.currentEmotion || 'neutral'}
-                      </div>
+                      {/* 表情状态指示器已移除，避免遮挡人物 */}
                   </div>
               </div>
 
@@ -1045,7 +1071,7 @@ const App: React.FC = () => {
                             <div className="grid grid-cols-3 gap-2 mb-4">
                                 {(globalAssets[npc.id] || []).map((img, idx) => (
                                     <div key={idx} className="aspect-[3/4] bg-black/40 rounded-lg overflow-hidden relative group">
-                                        <img src={img} className="w-full h-full object-cover" />
+                                        <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                         <button 
                                             onClick={() => handleDeleteAsset(npc.id, idx)}
                                             className="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
@@ -1078,7 +1104,7 @@ const App: React.FC = () => {
                             <div className="grid grid-cols-3 gap-2 mb-4">
                                 {(sceneRefImages[loc] || []).map((img, idx) => (
                                     <div key={idx} className="aspect-video bg-black/40 rounded-lg overflow-hidden relative group">
-                                        <img src={img} className="w-full h-full object-cover" />
+                                        <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                         <button 
                                             onClick={() => handleDeleteAsset(loc, idx)}
                                             className="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"

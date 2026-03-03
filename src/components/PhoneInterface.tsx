@@ -99,7 +99,7 @@ const PhoneInterface: React.FC<PhoneInterfaceProps> = ({
                 className="w-full p-3 border-b flex items-center gap-3 hover:bg-gray-50"
               >
                 <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-                   {npc?.avatarUrl ? <img src={npc.avatarUrl} alt={npc.name} className="w-full h-full object-cover" /> : null}
+                   {npc?.avatarUrl ? <img src={npc.avatarUrl} alt={npc.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : null}
                 </div>
                 <div className="text-left">
                   <div className="font-bold text-gray-800">{npc?.name || id}</div>
